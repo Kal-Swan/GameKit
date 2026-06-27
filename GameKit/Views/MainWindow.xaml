@@ -1,0 +1,93 @@
+﻿<Window x:Class="GameKit.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:GameKit.ViewModels"
+        xmlns:converters="clr-namespace:GameKit.Converters"
+        mc:Ignorable="d"
+        Title="{Binding Title}" 
+        Height="600" Width="900"
+        d:DataContext="{d:DesignInstance Type=viewModels:MainViewModel}">
+    <Window.Resources>
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <converters:NotNullToVisibleConverter x:Key="NotNullToVisibleConverter" />
+    </Window.Resources>
+    
+    <DockPanel>
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusMessage}"/>
+            </StatusBarItem>
+        </StatusBar>
+        
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <DockPanel Grid.Column="0" Background="#F5F5F5">
+                <Border DockPanel.Dock="Top" Padding="8" BorderBrush="#DDD" BorderThickness="0,0,0,1">
+                    <StackPanel DataContext="{Binding EntityList}">
+                        <TextBlock Text="Entities" FontWeight="SemiBold" Margin="0,0,0,6" />
+                        <StackPanel>
+                            <ComboBox Width="120"
+                                      ItemsSource="{Binding AvailableTypes}"
+                                      SelectedItem="{Binding SelectedTypeToAdd}"/>
+                            <Button Content="Add"
+                                    Margin="6,0,0,0"
+                                    Padding="10,2"
+                                    Command="{Binding AddEntityCommand}"/>
+                            <Button Content="Remove"
+                                    Margin="6,0,0,0"
+                                    Padding="10,2"
+                                    Command="{Binding RemoveEntityCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                
+                <ListBox ItemsSource="{Binding EntityList.Entities}"
+                         SelectedItem="{Binding EntityList.SelectedEntity}"
+                         BorderThickness="0"
+                         Background="Transparent">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type viewModels:EntityViewModel}">
+                            <StackPanel Orientation="Horizontal" Margin="2">
+                                <TextBlock Text="{Binding EntityType}"
+                                           Foreground="#888"
+                                           Width="60" />
+                                <TextBlock Text="{Binding Name}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+            <Border Grid.Column="1" Background="White">
+                <StackPanel>
+                    <TextBlock Visibility="{Binding EntityList.SelectedEntity, Converter={StaticResource NotNullToVisibleConverter}}" Text="Select or add an entity to begin"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Top"
+                               FontSize="14"
+                               Foreground="#999" />
+                    
+                    <ContentControl Visibility="{Binding EntityList.SelectedEntity, Converter={StaticResource NullToVisibilityConverter}}" Content="{Binding EntityList.SelectedEntity}">
+                        <ContentControl.Resources>
+                            <DataTemplate DataType="{x:Type viewModels:ItemEntityViewModel}">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Id}" FontWeight="SemiBold" Margin="0,0,0,6" />
+                                    <TextBlock Text="{Binding EntityType}" FontWeight="SemiBold" Margin="0,0,0,6" />
+                                    
+                                    <TextBox Text="{Binding Name}" />
+                                    <TextBox Name="Value" Text="{Binding Value}" />
+                                    <TextBox Name="Description" Text="{Binding Description}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ContentControl.Resources>
+                    </ContentControl>
+                    
+                </StackPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>
