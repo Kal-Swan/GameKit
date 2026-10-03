@@ -51,7 +51,10 @@ public partial class App : Application
         services.AddSingleton<IProjectRepository, JsonProjectRepository>();
         services.AddSingleton<ISelectionService>(serviceProvider => serviceProvider.GetRequiredService<EntityListViewModel>());
         
-        var pluginsDirectory = Path.Combine(AppContext.BaseDirectory, "Plugins");
+        var pluginsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "GameKit",
+            "Plugins");
+        
         var loader = new PluginLoader();
         
         services.AddSingleton<IExportStrategyRegistry>(serviceProvider =>
@@ -65,7 +68,6 @@ public partial class App : Application
             }
             return registry;
         });
-        
         
         services.AddSingleton<MainWindow>();
     }

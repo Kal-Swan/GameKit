@@ -260,7 +260,6 @@ public partial class MainViewModel : ObservableObject
                     return;
                 }
                 
-
                 _currentProject.Entities = Entities.Entities.Select(e => e.Entity).ToList();
 
                 var exportStrategy =
