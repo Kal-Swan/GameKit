@@ -1,4 +1,4 @@
-﻿using GameKit.Domain.Entities;
+﻿using Domain.Entities;
 
 namespace GameKit.ViewModels;
 
