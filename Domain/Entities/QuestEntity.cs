@@ -5,7 +5,7 @@ namespace Domain.Entities;
 
 public class QuestEntity : ITreeNode
 {
-    public Guid Id { get; } = Guid.NewGuid();
+    public Guid Id { get; init; } = Guid.NewGuid();
     public string Name { get; set; } = "New Quest";
     public string Description { get; set; } = string.Empty;
     public string EntityType => EntityTypeConstants.Quest;
