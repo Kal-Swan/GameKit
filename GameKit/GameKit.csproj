@@ -10,8 +10,9 @@
 
     <ItemGroup>
       <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
+      <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
     </ItemGroup>
 
     <ItemGroup>
@@ -20,6 +21,11 @@
         <XamlRuntime>Wpf</XamlRuntime>
         <SubType>Designer</SubType>
       </Page>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Core\Core.csproj" />
+      <ProjectReference Include="..\Domain\Domain.csproj" />
     </ItemGroup>
 
 </Project>

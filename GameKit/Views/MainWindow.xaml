@@ -5,89 +5,380 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:GameKit.ViewModels"
         xmlns:converters="clr-namespace:GameKit.Converters"
+        xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:u="clr-namespace:GameKit.UiElementHelpers"
+        xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         mc:Ignorable="d"
-        Title="{Binding Title}" 
-        Height="600" Width="900"
+        Title="{Binding Title}"
+        Height="600" Width="800"
         d:DataContext="{d:DesignInstance Type=viewModels:MainViewModel}">
     <Window.Resources>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <converters:NotNullToVisibleConverter x:Key="NotNullToVisibleConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <!-- <CollectionViewSource x:Key="SortedEntities"  -->
+        <!--                       Source="{Binding EntityList.Entities}"> -->
+        <!--     <CollectionViewSource.SortDescriptions> -->
+        <!--         <componentModel:SortDescription PropertyName="EntityType" /> -->
+        <!--         <componentModel:SortDescription PropertyName="Name" /> -->
+        <!--     </CollectionViewSource.SortDescriptions> -->
+        <!--     <CollectionViewSource.GroupDescriptions> -->
+        <!--         <PropertyGroupDescription PropertyName="EntityType" /> -->
+        <!--     </CollectionViewSource.GroupDescriptions> -->
+        <!-- </CollectionViewSource> -->
     </Window.Resources>
-    
+
+    <Window.InputBindings>
+        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding History.UndoCommand}" />
+        <KeyBinding Key="Y" Modifiers="Control" Command="{Binding History.RedoCommand}" />
+    </Window.InputBindings>
+
     <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            
+            <Menu.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <DockPanel HorizontalAlignment="Stretch" LastChildFill="False" />
+                </ItemsPanelTemplate>
+            </Menu.ItemsPanel>
+            
+            <MenuItem Header="File">
+                <MenuItem Header="New" Command="{Binding NewProjectCommand}" />
+                <MenuItem Header="Load" Command="{Binding LoadFileCommand}" />
+                <MenuItem Header="Save" Command="{Binding SaveCommand}"/>
+                <MenuItem Header="Save as" ItemsSource="{Binding ExportStrategies}">
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="MenuItem">
+                            <Setter Property="Header" Value="{Binding FormatName}" />
+                            <Setter Property="Command" Value="{Binding DataContext.SaveAsCommand, RelativeSource={RelativeSource AncestorType=Menu}}" />
+                            <Setter Property="CommandParameter" Value="{Binding FormatName}" />
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
+                </MenuItem>
+                
+                <Separator />
+                <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
+            </MenuItem>
+            <MenuItem Header="Undo" DataContext="{Binding History}" Command="{Binding UndoCommand}" />
+            <MenuItem Header="Redo" DataContext="{Binding History}" Command="{Binding RedoCommand}" />
+            <MenuItem Header="Validate All" Command="{Binding ValidateAllCommand}" />
+            <MenuItem Header="Show Stats" Command="{Binding ShowStatsCommand}" />
+            
+            <MenuItem Header="Show History" IsChecked="{Binding HistoryVisible}" IsCheckable="True" DockPanel.Dock="Right" />
+            <MenuItem Header="Show Tree" IsChecked="{Binding TreeVisible}" IsCheckable="True" DockPanel.Dock="Right" />
+        </Menu>
         <StatusBar DockPanel.Dock="Bottom">
-            <StatusBarItem>
-                <TextBlock Text="{Binding StatusMessage}"/>
-            </StatusBarItem>
+            <!-- <StatusBarItem> -->
+            <!--     <TextBlock Text="{Binding StatusMessage}" /> -->
+            <!-- </StatusBarItem> -->
+            <StackPanel Orientation="Horizontal">
+                <ProgressBar Width="60" Height="4" Margin="0,0,8,0"
+                             IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}" />
+                <TextBlock Text="{Binding StatusMessage}" MaxWidth="320" TextTrimming="CharacterEllipsis" Foreground="#777" />
+            </StackPanel>
         </StatusBar>
-        
+
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="260"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300" />
+                <ColumnDefinition
+                    Width="{Binding TreeColumnWidth}" />
+                <ColumnDefinition
+                    Width="{Binding HistoryColumnWidth}" />
             </Grid.ColumnDefinitions>
-            
-            <DockPanel Grid.Column="0" Background="#F5F5F5">
-                <Border DockPanel.Dock="Top" Padding="8" BorderBrush="#DDD" BorderThickness="0,0,0,1">
-                    <StackPanel DataContext="{Binding EntityList}">
-                        <TextBlock Text="Entities" FontWeight="SemiBold" Margin="0,0,0,6" />
-                        <StackPanel>
-                            <ComboBox Width="120"
+
+            <DockPanel Grid.Column="0">
+                <StackPanel>
+                <Border DockPanel.Dock="Top" Padding="8" BorderBrush="#DDD" BorderThickness="0,0,0,1" Margin="5, 0, 5, 0">
+                    <StackPanel DataContext="{Binding Entities}">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="+"
+                                    Margin="0,0,0,0"
+                                    Padding="10,2"
+                                    Command="{Binding AddEntityCommand}" />
+
+                            <Button Content="-"
+                                    Margin="4,0,0,0"
+                                    Padding="10,2"
+                                    Command="{Binding RemoveEntityCommand}" />
+                            
+                            <ComboBox Width="200"
+                                      Margin="6,0,0,0"
                                       ItemsSource="{Binding AvailableTypes}"
-                                      SelectedItem="{Binding SelectedTypeToAdd}"/>
-                            <Button Content="Add"
-                                    Margin="6,0,0,0"
-                                    Padding="10,2"
-                                    Command="{Binding AddEntityCommand}"/>
-                            <Button Content="Remove"
-                                    Margin="6,0,0,0"
-                                    Padding="10,2"
-                                    Command="{Binding RemoveEntityCommand}"/>
+                                      SelectedItem="{Binding SelectedTypeToAdd}" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
-                
-                <ListBox ItemsSource="{Binding EntityList.Entities}"
-                         SelectedItem="{Binding EntityList.SelectedEntity}"
-                         BorderThickness="0"
-                         Background="Transparent">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate DataType="{x:Type viewModels:EntityViewModel}">
-                            <StackPanel Orientation="Horizontal" Margin="2">
-                                <TextBlock Text="{Binding EntityType}"
-                                           Foreground="#888"
-                                           Width="60" />
-                                <TextBlock Text="{Binding Name}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </DockPanel>
-            <Border Grid.Column="1" Background="White">
-                <StackPanel>
-                    <TextBlock Visibility="{Binding EntityList.SelectedEntity, Converter={StaticResource NotNullToVisibleConverter}}" Text="Select or add an entity to begin"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Top"
-                               FontSize="14"
-                               Foreground="#999" />
-                    
-                    <ContentControl Visibility="{Binding EntityList.SelectedEntity, Converter={StaticResource NullToVisibilityConverter}}" Content="{Binding EntityList.SelectedEntity}">
-                        <ContentControl.Resources>
-                            <DataTemplate DataType="{x:Type viewModels:ItemEntityViewModel}">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Id}" FontWeight="SemiBold" Margin="0,0,0,6" />
-                                    <TextBlock Text="{Binding EntityType}" FontWeight="SemiBold" Margin="0,0,0,6" />
-                                    
-                                    <TextBox Text="{Binding Name}" />
-                                    <TextBox Name="Value" Text="{Binding Value}" />
-                                    <TextBox Name="Description" Text="{Binding Description}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ContentControl.Resources>
-                    </ContentControl>
-                    
+
+                    <StackPanel>
+                        <TextBlock
+                            Visibility="{Binding Entities.SelectedEntity, Converter={StaticResource NotNullToVisibleConverter}}"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            FontSize="14"
+                            Foreground="#999" />
+
+                        <ContentControl
+                            Visibility="{Binding Entities.SelectedEntity, Converter={StaticResource NullToVisibilityConverter}}"
+                            Content="{Binding Entities.SelectedEntity}">
+                            <ContentControl.Resources>
+                                <DataTemplate DataType="{x:Type viewModels:ItemEntityViewModel}">
+                                    <StackPanel Margin="2">
+                                        <StackPanel Orientation="Vertical" Width="Auto">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Type:" Margin="0,0,2,6" />
+                                                <TextBlock Text="{Binding EntityType}" Margin="2,0,6,6" />
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Id:" Margin="0,0,2,6" />
+                                                <TextBlock Text="{Binding Id}" Margin="2,0,0,6" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Vertical">
+                                            <TextBlock Text="Name" Margin="0,4,0,2" Foreground="#666" />
+                                            <TextBox Margin="0, 0, 0, 2" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}">
+                                                <b:Interaction.Triggers>
+                                                    <b:EventTrigger EventName="GotFocus">
+                                                        <b:InvokeCommandAction Command="{Binding BeginEditCommand}"
+                                                                               CommandParameter="Name" />
+                                                    </b:EventTrigger>
+                                                    <b:EventTrigger EventName="LostFocus">
+                                                        <b:InvokeCommandAction Command="{Binding CommitEditCommand}"
+                                                                               CommandParameter="Name" />
+                                                    </b:EventTrigger>
+                                                </b:Interaction.Triggers>
+                                            </TextBox>
+                                            <ItemsControl ItemsSource="{Binding NameErrors}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}" Foreground="Red" FontSize="11" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Vertical">
+                                            <TextBlock Text="Value" Margin="0,4,0,2" Foreground="#666" />
+                                            <TextBox Margin="0, 0, 0, 2" Name="Value"
+                                                     Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}">
+                                                <b:Interaction.Triggers>
+                                                    <b:EventTrigger EventName="GotFocus">
+                                                        <b:InvokeCommandAction Command="{Binding BeginEditCommand}"
+                                                                               CommandParameter="Value" />
+                                                    </b:EventTrigger>
+                                                    <b:EventTrigger EventName="LostFocus">
+                                                        <b:InvokeCommandAction Command="{Binding CommitEditCommand}"
+                                                                               CommandParameter="Value" />
+                                                    </b:EventTrigger>
+                                                </b:Interaction.Triggers>
+                                            </TextBox>
+                                            <ItemsControl ItemsSource="{Binding ValueErrors}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}" Foreground="Red" FontSize="11" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Vertical">
+                                            <TextBlock Text="Description" Margin="0,4,0,2" Foreground="#666" />
+                                            <TextBox Margin="0, 0, 0, 2" Name="Description"
+                                                     Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}">
+                                                <b:Interaction.Triggers>
+                                                    <b:EventTrigger EventName="GotFocus">
+                                                        <b:InvokeCommandAction Command="{Binding BeginEditCommand}"
+                                                                               CommandParameter="Description" />
+                                                    </b:EventTrigger>
+                                                    <b:EventTrigger EventName="LostFocus">
+                                                        <b:InvokeCommandAction Command="{Binding CommitEditCommand}"
+                                                                               CommandParameter="Description" />
+                                                    </b:EventTrigger>
+                                                </b:Interaction.Triggers>
+                                            </TextBox>
+                                            <ItemsControl ItemsSource="{Binding DescriptionErrors}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}" Foreground="Red" FontSize="11" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                                <DataTemplate DataType="{x:Type viewModels:QuestNodeViewModel}">
+                                    <StackPanel Margin="2">
+                                        <StackPanel Orientation="Vertical" Width="Auto">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Type:" Margin="0,0,2,6" />
+                                                <TextBlock Text="{Binding EntityType}" Margin="2,0,6,6" />
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Id:" Margin="0,0,2,6" />
+                                                <TextBlock Text="{Binding Id}" Margin="2,0,0,6" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Vertical">
+                                            <TextBlock Text="Name" Margin="0,4,0,2" Foreground="#666" />
+                                            <TextBox Margin="0, 0, 0, 2" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}">
+                                                <b:Interaction.Triggers>
+                                                    <b:EventTrigger EventName="GotFocus">
+                                                        <b:InvokeCommandAction Command="{Binding BeginEditCommand}"
+                                                                               CommandParameter="Name" />
+                                                    </b:EventTrigger>
+                                                    <b:EventTrigger EventName="LostFocus">
+                                                        <b:InvokeCommandAction Command="{Binding CommitEditCommand}"
+                                                                               CommandParameter="Name" />
+                                                    </b:EventTrigger>
+                                                </b:Interaction.Triggers>
+                                            </TextBox>
+                                            <ItemsControl ItemsSource="{Binding NameErrors}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}" Foreground="Red" FontSize="11" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Vertical">
+                                            <TextBlock Text="Description" Margin="0,4,0,2" Foreground="#666" />
+                                            <TextBox Margin="0, 0, 0, 2" Name="Description"
+                                                     Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}">
+                                                <b:Interaction.Triggers>
+                                                    <b:EventTrigger EventName="GotFocus">
+                                                        <b:InvokeCommandAction Command="{Binding BeginEditCommand}"
+                                                                               CommandParameter="Description" />
+                                                    </b:EventTrigger>
+                                                    <b:EventTrigger EventName="LostFocus">
+                                                        <b:InvokeCommandAction Command="{Binding CommitEditCommand}"
+                                                                               CommandParameter="Description" />
+                                                    </b:EventTrigger>
+                                                </b:Interaction.Triggers>
+                                            </TextBox>
+                                            <ItemsControl ItemsSource="{Binding DescriptionErrors}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}" Foreground="Red" FontSize="11" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ContentControl.Resources>
+                        </ContentControl>
+                    </StackPanel>
                 </StackPanel>
-            </Border>
+            </DockPanel>
+            
+            <Grid Grid.Column="1">
+                <DockPanel Background="#FAFAFA">
+                    <TextBlock
+                        DockPanel.Dock="Left"
+                        Text="Tree"
+                        FontWeight="SemiBold"
+                        Padding="4, 8 ,4, 20" />
+                    <TextBox u:TextBoxHelper.Placeholder="Search"  DockPanel.Dock="Top" ToolTip="Search the tree" Margin="0, 8, 4, 0" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" />
+                    <TreeView 
+                        AllowDrop="True"
+                        PreviewMouseLeftButtonDown="BeginDrag"
+                        PreviewMouseMove="Drag"
+                        DragOver="EndDrag"
+                        Drop="DropOver"
+                        ItemsSource="{Binding Entities.Entities}"
+                        BorderThickness="0"
+                        Background="Transparent"
+                        GiveFeedback="OnTreeGiveFeedback">
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <Setter Property="Visibility" 
+                                        Value="{Binding IsVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+                        <b:Interaction.Triggers>
+                            <b:EventTrigger EventName="SelectedItemChanged">
+                                <b:InvokeCommandAction Command="{Binding Entities.CreatedItemCommand}"
+                                                       CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=TreeView}}" />
+                            </b:EventTrigger>
+                        </b:Interaction.Triggers>
+                        <TreeView.Resources>
+                            <HierarchicalDataTemplate DataType="{x:Type viewModels:EntityViewModel}"
+                                                      ItemsSource="{Binding Children}">
+                                
+                                <Border CornerRadius="3" Padding="4,1">
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem CommandParameter="Item" Header="Add Item child"
+                                                      Command="{Binding AddChildCommand}" />
+                                            <MenuItem CommandParameter="Quest" Header="Add Quest child"
+                                                      Command="{Binding AddChildCommand}" />
+                                            <MenuItem Header="Move To..."
+                                                      Command="{Binding OpenMoveDialogCommand}" />
+                                            <MenuItem Header="Convert to Parent"
+                                                      Command="{Binding ConvertToParentCommand}" />
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="BorderThickness" Value="1" />
+                                            <Setter Property="BorderBrush" Value="Transparent" />
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ContextMenu.IsOpen, 
+                                                RelativeSource={RelativeSource Self}}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="#3C3489" />
+                                                    <Setter Property="Background" Value="#EEEDFE" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    
+                                    <StackPanel Orientation="Horizontal" Margin="2">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" ToolTip="Right-click for options" />
+                                    </StackPanel>
+                                </Border>
+                            </HierarchicalDataTemplate>
+                        </TreeView.Resources>
+                    </TreeView>
+                </DockPanel>
+            </Grid>
+
+
+            <Grid Grid.Column="2">
+                <DockPanel Background="#f5f5f5" DataContext="{Binding History}">
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="History"
+                               FontWeight="SemiBold"
+                               Padding="8,8,0,8" />
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <ItemsControl ItemsSource="{Binding RedoStack}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Description}"
+                                                   Foreground="#AAA"
+                                                   Padding="12,4"
+                                                   FontStyle="Italic" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <Border Background="#EEEDFE" Padding="12,4" Margin="0,2">
+                                <TextBlock Text="— Current —" Foreground="#3C3489" FontWeight="SemiBold" />
+                            </Border>
+
+                            <ItemsControl ItemsSource="{Binding UndoStack}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Description}"
+                                                   Padding="12,4" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Grid>
         </Grid>
     </DockPanel>
 </Window>
